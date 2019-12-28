@@ -1,0 +1,37 @@
+pipeline{
+    agent anyone
+    stages{
+        stage ('clone') {
+            steps{
+                checkout([$class: 'GitSCM', branches: [[name: '*/gh-pages']], 
+                doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], 
+                userRemoteConfigs: [[url: 'https://github.com/shashirajraja/onlinebookstore.git']]])
+            }
+        }
+    stage ('build'){
+        steps{
+            sh "mvn clean package"
+        }
+    }
+    stage ('rename'){
+        steps{
+            sh "cd target/ && mv *.war onlinebookstore.war"
+        }
+    }
+    stage ('move'){
+        steps{
+           sh "sudo cp target/*.war /home/srikanth/docker/"
+        }
+    }
+    stage('build docker image') {
+        steps {
+          sh "cd /home/srikanth/docker/ && sudo docker build -t onlinebookstore ."
+        }
+     }
+     stage ('Run Docker Image') {
+         steps {
+             sh "sudo docker run -d -p 8090:8080 onlinebookstore"
+         }
+     }
+   }
+ }
